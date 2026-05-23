@@ -3,7 +3,7 @@
 > /whattodo-next 가 작성하고, /orchestrator 가 세션 시작 시 읽는다.
 
 ## 상태
-진행 중 (planner 대기)
+진행 중 (executor 대기)
 
 ## Task
 LangGraph 에이전트 아키텍처 설계
