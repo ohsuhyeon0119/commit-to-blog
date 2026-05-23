@@ -1,11 +1,13 @@
 import json
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from app.agent.graph import agent_graph
 from app.agent.state import RepoContextRequest, RepoContext
-from app.core.config import settings
+from app.core.database import get_db
+from app.models import Repository
 
 router = APIRouter()
 
@@ -22,19 +24,28 @@ class ChatRequest(BaseModel):
     history: list[HistoryMessage] = []
 
 
-def resolve_repo_contexts(requests: list[RepoContextRequest]) -> list[RepoContext]:
-    """Convert client repo_id references to server-side clone_path."""
-    return [
-        RepoContext(
-            repo_id=r["repo_id"],
-            clone_path=f"{settings.repos_path}/{r['repo_id']}",
-            branch=r["branch"],
+def resolve_repo_contexts(
+    requests: list[RepoContextRequest], db: Session
+) -> list[RepoContext]:
+    """Resolve repo_id → clone_path via DB lookup."""
+    result = []
+    for r in requests:
+        repo = db.query(Repository).filter(Repository.id == r["repo_id"]).first()
+        if repo is None:
+            raise HTTPException(status_code=404, detail=f"Repository {r['repo_id']} not found")
+        if not repo.clone_path:
+            raise HTTPException(status_code=409, detail=f"Repository {r['repo_id']} is not cloned yet")
+        result.append(
+            RepoContext(
+                repo_id=repo.id,
+                clone_path=repo.clone_path,
+                branch=r["branch"],
+            )
         )
-        for r in requests
-    ]
+    return result
 
 
-async def event_stream(request: ChatRequest):
+async def event_stream(request: ChatRequest, repo_contexts: list[RepoContext]):
     from langchain_core.messages import HumanMessage, AIMessage, AIMessageChunk
 
     messages = []
@@ -48,7 +59,7 @@ async def event_stream(request: ChatRequest):
     initial_state = {
         "messages": messages,
         "post_content": request.post_content,
-        "repo_contexts": resolve_repo_contexts(request.repo_contexts),
+        "repo_contexts": repo_contexts,
         "pending_edit": None,
     }
 
@@ -72,9 +83,14 @@ async def event_stream(request: ChatRequest):
 
 
 @router.post("/{session_id}/message")
-async def send_message(session_id: int, request: ChatRequest):
+async def send_message(
+    session_id: int,
+    request: ChatRequest,
+    db: Session = Depends(get_db),
+):
+    repo_contexts = resolve_repo_contexts(request.repo_contexts, db)
     return StreamingResponse(
-        event_stream(request),
+        event_stream(request, repo_contexts),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

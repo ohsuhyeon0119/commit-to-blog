@@ -16,26 +16,26 @@ SQLAlchemy 모델 + 핵심 API 구현
 
 ## 실행 단계
 
-- [ ] 1. SQLAlchemy ORM 모델 정의
+- [x] 1. SQLAlchemy ORM 모델 정의
         파일: backend/app/models/__init__.py
         테이블: User, Repository, Post, PostRepoReference,
                 ChatSession, ChatMessage, ChatRepoContext
 
-- [ ] 2. Pydantic 응답 스키마 정의
+- [x] 2. Pydantic 응답 스키마 정의
         파일: backend/app/schemas/__init__.py
         스키마: PostCreate, PostResponse, PostUpdate,
                 RepoCreate, RepoResponse
 
-- [ ] 3. Posts API 구현
+- [x] 3. Posts API 구현
         파일: backend/app/api/posts.py
         엔드포인트: GET /api/posts, POST /api/posts,
                     GET /api/posts/{id}, PATCH /api/posts/{id}
 
-- [ ] 4. Repos API 구현
+- [x] 4. Repos API 구현
         파일: backend/app/api/repos.py
         엔드포인트: GET /api/repos, POST /api/repos
 
-- [ ] 5. Chat API clone_path DB lookup 수정
+- [x] 5. Chat API clone_path DB lookup 수정
         파일: backend/app/api/chat.py
         변경: resolve_repo_contexts → DB에서 Repository 조회
 
