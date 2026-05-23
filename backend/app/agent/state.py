@@ -22,3 +22,4 @@ class AgentState(TypedDict):
     post_content: str
     repo_contexts: list[RepoContext]
     pending_edit: str | None
+    pending_partial_edit: str | None

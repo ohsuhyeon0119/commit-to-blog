@@ -37,14 +37,27 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
 
 @router.patch("/{post_id}", response_model=PostResponse)
 def update_post(post_id: int, body: PostUpdate, db: Session = Depends(get_db)):
+    from datetime import datetime
     post = db.query(Post).filter(Post.id == post_id, Post.user_id == TEMP_USER_ID).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     for field, value in body.model_dump(exclude_none=True).items():
         setattr(post, field, value)
+    if body.status == 'published' and post.published_at is None:
+        post.published_at = datetime.utcnow()
     db.commit()
     db.refresh(post)
     return post
+
+
+@router.delete("/{post_id}", status_code=204)
+def delete_post(post_id: int, db: Session = Depends(get_db)):
+    post = db.query(Post).filter(Post.id == post_id, Post.user_id == TEMP_USER_ID).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    db.query(PostRepoReference).filter(PostRepoReference.post_id == post_id).delete()
+    db.delete(post)
+    db.commit()
 
 
 # ── 포스트-레포 연결 ───────────────────────────────────

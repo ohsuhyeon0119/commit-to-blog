@@ -61,6 +61,7 @@ async def event_stream(request: ChatRequest, repo_contexts: list[RepoContext]):
         "post_content": request.post_content,
         "repo_contexts": repo_contexts,
         "pending_edit": None,
+        "pending_partial_edit": None,
     }
 
     async for event in agent_graph.astream_events(initial_state, version="v2"):
@@ -75,8 +76,12 @@ async def event_stream(request: ChatRequest, repo_contexts: list[RepoContext]):
         elif kind == "on_chain_end" and event["name"] == "execute_tools":
             output = event["data"].get("output", {})
             pending_edit = output.get("pending_edit")
+            pending_partial_edit = output.get("pending_partial_edit")
             if pending_edit:
                 data = json.dumps({"type": "edit_suggestion", "content": pending_edit})
+                yield f"data: {data}\n\n"
+            if pending_partial_edit:
+                data = json.dumps({"type": "partial_edit_suggestion", "content": pending_partial_edit})
                 yield f"data: {data}\n\n"
 
     yield "data: " + json.dumps({"type": "done"}) + "\n\n"

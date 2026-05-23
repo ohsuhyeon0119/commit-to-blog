@@ -50,10 +50,14 @@ def search_in_repo(clone_path: str, query: str) -> str:
 
 @tool
 def suggest_edit(new_content: str) -> str:
-    """Propose a full replacement for the blog post content.
-    Only call this when the user explicitly asks to modify the post."""
-    # The graph intercepts this tool result to set pending_edit on the state.
+    """블로그 포스트 전체 내용을 새 버전으로 제안합니다. 전체 수정 요청에만 사용하세요."""
     return f"__EDIT_SUGGESTION__{new_content}__END_SUGGESTION__"
 
 
-FILE_TOOLS = [list_directory, read_file, search_in_repo, suggest_edit]
+@tool
+def suggest_partial_edit(replacement_text: str) -> str:
+    """에디터에서 선택된 특정 부분만 교체할 때 사용합니다. replacement_text에는 선택된 부분을 대체할 새 텍스트만 넣으세요. 전체 내용이 아닌 선택 부분만 반환하세요."""
+    return f"__PARTIAL_EDIT__{replacement_text}__END_PARTIAL__"
+
+
+FILE_TOOLS = [list_directory, read_file, search_in_repo, suggest_edit, suggest_partial_edit]

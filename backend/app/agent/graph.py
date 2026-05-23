@@ -6,20 +6,26 @@ from langgraph.graph import StateGraph, END
 from app.agent.state import AgentState
 from app.agent.tools import FILE_TOOLS
 
-SYSTEM_PROMPT = """You are a writing assistant that helps users write and improve their development blog posts.
+SYSTEM_PROMPT = """당신은 개발 블로그 포스트 작성을 도와주는 AI 글쓰기 어시스턴트입니다.
 
-You have access to the user's GitHub repository files. Use them to understand the codebase context when needed.
+사용자의 GitHub 레포지토리 파일에 접근할 수 있습니다. 필요할 때 코드베이스 맥락을 파악하는 데 활용하세요.
 
-Tools available:
-- list_directory: browse the repo structure
-- read_file: read a specific file
-- search_in_repo: search for keywords across the repo
-- suggest_edit: propose a FULL replacement for the blog post content
+사용 가능한 도구:
+- list_directory: 레포 디렉터리 구조 탐색
+- read_file: 특정 파일 내용 읽기
+- search_in_repo: 레포 전체에서 키워드 검색
+- suggest_edit: 블로그 포스트 내용 전체를 새 버전으로 제안
 
-Rules:
-- Only call suggest_edit when the user explicitly asks to modify/rewrite/update the post.
-- For general questions or exploration, use the other tools and respond conversationally.
-- Keep responses concise and focused on the blog writing task.
+규칙:
+- 사용자 메시지에 [에디터에서 선택한 부분] 섹션이 있으면, 해당 텍스트가 질문의 대상입니다. 사용자의 요청이 수정/교체라면 suggest_partial_edit를 사용하세요. 설명, 피드백, 의견 요청이라면 suggest_edit 없이 대화로 답변하세요.
+- 전체 글 수정 요청("전체 다시 써줘", "처음부터 작성해줘" 등)에는 suggest_edit를 사용하세요.
+- 에디터에 내용을 새로 작성하거나 추가하는 요청("작성해봐", "써봐", "추가해줘" 등)에는 suggest_edit를 사용하세요.
+- 도구를 호출하지 않고 수정 내용을 텍스트로만 설명하지 마세요.
+- 도구 호출 후에는 무엇을 바꿨는지 1~2문장으로 간략히 설명하세요.
+- 일반 질문, 레포 탐색, 조언처럼 에디터 변경이 필요 없는 요청은 도구 없이 대화로 응답하세요.
+- 모든 응답은 반드시 한국어 존댓말로 작성하세요.
+- 블로그 글을 쓸 때는 마크다운 형식(#, **, -, 코드블록 등)을 사용하지 마세요. 소감문이나 감상문처럼 자연스러운 일반 문장으로 작성하세요. 단락과 문장으로만 구성하세요.
+- 답변은 간결하게, 블로그 작성 과제에 집중하세요.
 """
 
 from app.core.config import settings as _settings
@@ -30,6 +36,9 @@ llm_with_tools = llm.bind_tools(FILE_TOOLS)
 
 EDIT_PATTERN = re.compile(
     r"__EDIT_SUGGESTION__(.+?)__END_SUGGESTION__", re.DOTALL
+)
+PARTIAL_EDIT_PATTERN = re.compile(
+    r"__PARTIAL_EDIT__(.+?)__END_PARTIAL__", re.DOTALL
 )
 
 
@@ -55,6 +64,7 @@ def execute_tools(state: AgentState) -> dict:
 
     results = []
     pending_edit = state.get("pending_edit")
+    pending_partial_edit = state.get("pending_partial_edit")
 
     for tool_call in last_message.tool_calls:
         tool = tool_map.get(tool_call["name"])
@@ -63,11 +73,15 @@ def execute_tools(state: AgentState) -> dict:
         else:
             output = tool.invoke(tool_call["args"])
 
-        # intercept suggest_edit result
         match = EDIT_PATTERN.search(str(output))
         if match:
             pending_edit = match.group(1).strip()
-            output = "Edit suggestion recorded. The user will see an apply button."
+            output = "전체 수정 제안이 저장되었습니다. 사용자가 적용 버튼을 볼 것입니다."
+
+        partial_match = PARTIAL_EDIT_PATTERN.search(str(output))
+        if partial_match:
+            pending_partial_edit = partial_match.group(1).strip()
+            output = "선택 부분 수정 제안이 저장되었습니다. 사용자가 적용 버튼을 볼 것입니다."
 
         results.append(
             ToolMessage(content=str(output), tool_call_id=tool_call["id"])
@@ -76,6 +90,8 @@ def execute_tools(state: AgentState) -> dict:
     update: dict = {"messages": results}
     if pending_edit is not None:
         update["pending_edit"] = pending_edit
+    if pending_partial_edit is not None:
+        update["pending_partial_edit"] = pending_partial_edit
     return update
 
 
