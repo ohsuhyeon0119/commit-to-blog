@@ -48,3 +48,17 @@
 - 보안 수정: clone_path 클라이언트 주입 → repo_id만 받고 서버에서 경로 구성
 - 기능 수정: assistant 메시지 history 복원
 - 관련 docs 업데이트: 있음 (docs/backend/agent.md 신규)
+
+## 2026-05-23 GitHub 레포 연동 + 포스트 생성 플로우
+- 완료 조건: 모두 충족 (6/6)
+- 주요 변경:
+  - backend/app/api/repos.py — GET /api/repos/github, POST /api/repos/{id}/clone, GET /api/repos/{id}/clone-status
+  - backend/app/api/posts.py — GET/POST /api/posts/{id}/repo
+  - backend/app/services/git.py (신규) — 백그라운드 git clone + clone_status 조회
+  - backend/app/schemas/__init__.py — GithubRepoItem, CloneStatusResponse, clone_status 필드
+  - frontend/src/services/api.ts — listGithubRepos, registerRepo, cloneRepo, getCloneStatus, getPostRepo, linkPostRepo
+  - frontend/src/components/post/NewPostModal.tsx (신규) — 제목 + GitHub 레포 선택 모달
+  - frontend/src/pages/HomePage.tsx — NewPostModal 연결
+  - frontend/src/pages/EditorPage.tsx — 레포 뱃지, clone 폴링, repo_contexts
+- 테스트: GitHub API 레포 100개 ✅, git clone ✅, 에이전트 레포 탐색 ✅
+- 관련 docs 업데이트: 없음 (components.md, state-flow.md 이미 최신)
