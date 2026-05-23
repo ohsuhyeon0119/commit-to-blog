@@ -43,7 +43,7 @@ export interface CloneStatus {
 }
 
 export interface ChatEvent {
-  type: 'token' | 'edit_suggestion' | 'done'
+  type: 'token' | 'edit_suggestion' | 'partial_edit_suggestion' | 'done'
   content?: string
 }
 
@@ -75,8 +75,11 @@ export const createPost = (title: string): Promise<Post> =>
 
 export const getPost = (id: number): Promise<Post> => request(`/api/posts/${id}`)
 
-export const updatePost = (id: number, data: { title?: string; content?: string }): Promise<Post> =>
+export const updatePost = (id: number, data: { title?: string; content?: string; status?: 'draft' | 'published' }): Promise<Post> =>
   request(`/api/posts/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+
+export const deletePost = (id: number): Promise<void> =>
+  fetch(`${BASE}/api/posts/${id}`, { method: 'DELETE' }).then(() => {})
 
 export const getPostRepo = (postId: number): Promise<Repo | null> =>
   request<Repo | null>(`/api/posts/${postId}/repo`)
