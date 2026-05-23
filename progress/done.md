@@ -14,6 +14,18 @@
 - 주요 변경: docker-compose.yml, frontend/, backend/, db/init.sql 생성
 - 관련 docs 업데이트: 없음
 
+## 2026-05-23 프론트엔드 핵심 UI 구현
+- 완료 조건: 모두 충족 (6/6)
+- 주요 변경:
+  - frontend/src/services/api.ts — posts CRUD + SSE chat stream
+  - frontend/src/index.css — 다크 테마 디자인 토큰
+  - frontend/src/App.tsx — react-router-dom 라우팅
+  - frontend/src/pages/HomePage.tsx — 포스트 목록 + 생성
+  - frontend/src/pages/EditorPage.tsx — 마크다운 에디터 + 챗 패널
+  - .gitignore 추가
+- 테스트: TypeScript 에러 0, vite build ✅, API 전 엔드포인트 실제 검증
+- 관련 docs 업데이트: 없음
+
 ## 2026-05-23 SQLAlchemy 모델 + 핵심 API 구현
 - 완료 조건: 모두 충족 (5/5)
 - 주요 변경:
