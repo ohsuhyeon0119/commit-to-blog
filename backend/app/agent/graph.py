@@ -22,7 +22,10 @@ Rules:
 - Keep responses concise and focused on the blog writing task.
 """
 
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, streaming=True)
+from app.core.config import settings as _settings
+
+_model_name = getattr(_settings, "openai_model", "gpt-4o-mini")
+llm = ChatOpenAI(model=_model_name, temperature=0.7, streaming=True)
 llm_with_tools = llm.bind_tools(FILE_TOOLS)
 
 EDIT_PATTERN = re.compile(

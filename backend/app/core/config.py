@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     openai_api_key: str
     github_token: str
     repos_path: str = "/app/repos"
+    openai_model: str = "gpt-4o-mini"
 
     class Config:
         env_file = ".env"

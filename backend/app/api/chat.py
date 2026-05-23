@@ -4,31 +4,51 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.agent.graph import agent_graph
-from app.agent.state import RepoContext
+from app.agent.state import RepoContextRequest, RepoContext
+from app.core.config import settings
 
 router = APIRouter()
+
+
+class HistoryMessage(BaseModel):
+    role: str
+    content: str
 
 
 class ChatRequest(BaseModel):
     message: str
     post_content: str
-    repo_contexts: list[RepoContext] = []
-    history: list[dict] = []
+    repo_contexts: list[RepoContextRequest] = []
+    history: list[HistoryMessage] = []
+
+
+def resolve_repo_contexts(requests: list[RepoContextRequest]) -> list[RepoContext]:
+    """Convert client repo_id references to server-side clone_path."""
+    return [
+        RepoContext(
+            repo_id=r["repo_id"],
+            clone_path=f"{settings.repos_path}/{r['repo_id']}",
+            branch=r["branch"],
+        )
+        for r in requests
+    ]
 
 
 async def event_stream(request: ChatRequest):
-    from langchain_core.messages import HumanMessage, AIMessageChunk
+    from langchain_core.messages import HumanMessage, AIMessage, AIMessageChunk
 
     messages = []
     for msg in request.history:
-        if msg["role"] == "user":
-            messages.append(HumanMessage(content=msg["content"]))
+        if msg.role == "user":
+            messages.append(HumanMessage(content=msg.content))
+        elif msg.role == "assistant":
+            messages.append(AIMessage(content=msg.content))
     messages.append(HumanMessage(content=request.message))
 
     initial_state = {
         "messages": messages,
         "post_content": request.post_content,
-        "repo_contexts": request.repo_contexts,
+        "repo_contexts": resolve_repo_contexts(request.repo_contexts),
         "pending_edit": None,
     }
 
@@ -42,7 +62,6 @@ async def event_stream(request: ChatRequest):
                 yield f"data: {data}\n\n"
 
         elif kind == "on_chain_end" and event["name"] == "execute_tools":
-            # check if pending_edit was set in this step
             output = event["data"].get("output", {})
             pending_edit = output.get("pending_edit")
             if pending_edit:
