@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models import Post
-from app.schemas import PostCreate, PostResponse, PostUpdate
+from app.models import Post, PostRepoReference, Repository
+from app.schemas import PostCreate, PostResponse, PostUpdate, RepoResponse
+from app.services.git import get_clone_status
 
 router = APIRouter()
 
@@ -43,3 +45,43 @@ def update_post(post_id: int, body: PostUpdate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(post)
     return post
+
+
+# ── 포스트-레포 연결 ───────────────────────────────────
+
+class PostRepoLinkBody(BaseModel):
+    repo_id: int
+    branch: str = "main"
+
+
+@router.get("/{post_id}/repo", response_model=RepoResponse | None)
+def get_post_repo(post_id: int, db: Session = Depends(get_db)):
+    ref = db.query(PostRepoReference).filter(PostRepoReference.post_id == post_id).first()
+    if not ref:
+        return None
+    repo = db.query(Repository).filter(Repository.id == ref.repo_id).first()
+    if not repo:
+        return None
+    data = RepoResponse.model_validate(repo)
+    data.clone_status = get_clone_status(repo)
+    return data
+
+
+@router.post("/{post_id}/repo", response_model=RepoResponse, status_code=201)
+def link_post_repo(post_id: int, body: PostRepoLinkBody, db: Session = Depends(get_db)):
+    post = db.query(Post).filter(Post.id == post_id, Post.user_id == TEMP_USER_ID).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    repo = db.query(Repository).filter(Repository.id == body.repo_id).first()
+    if not repo:
+        raise HTTPException(status_code=404, detail="Repository not found")
+
+    # 기존 연결 제거 후 재연결 (포스트당 레포 1개)
+    db.query(PostRepoReference).filter(PostRepoReference.post_id == post_id).delete()
+    ref = PostRepoReference(post_id=post_id, repo_id=body.repo_id, branch=body.branch)
+    db.add(ref)
+    db.commit()
+
+    data = RepoResponse.model_validate(repo)
+    data.clone_status = get_clone_status(repo)
+    return data

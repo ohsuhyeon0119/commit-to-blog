@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
 
-from app.models import PostStatus, ReferenceType
+from app.models import PostStatus
 
 
 # ── Post ──────────────────────────────────────────────
@@ -49,8 +49,27 @@ class RepoResponse(BaseModel):
     full_name: str
     clone_path: Optional[str] = None
     cloned_at: Optional[datetime] = None
+    clone_status: str = "not_cloned"   # not_cloned | cloning | cloned | error
 
     model_config = {"from_attributes": True}
+
+
+class GithubRepoItem(BaseModel):
+    """GitHub API에서 받은 레포 정보 (DB 저장 전)"""
+    github_repo_id: str
+    owner: str
+    name: str
+    full_name: str
+    description: Optional[str] = None
+    private: bool = False
+    default_branch: str = "main"
+
+
+class CloneStatusResponse(BaseModel):
+    repo_id: int
+    status: str          # cloning | cloned | error
+    clone_path: Optional[str] = None
+    message: Optional[str] = None
 
 
 # ── Chat ──────────────────────────────────────────────

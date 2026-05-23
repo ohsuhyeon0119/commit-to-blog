@@ -14,11 +14,11 @@ GitHub 레포 연동 + 포스트 생성 플로우
 
 ## 실행 단계
 
-- [ ] 1. 백엔드: GET /api/repos/github
+- [x] 1. 백엔드: GET /api/repos/github
         GitHub REST API로 인증된 유저의 레포 목록 반환
         파일: backend/app/api/repos.py
 
-- [ ] 2. 백엔드: POST /api/repos/{id}/clone
+- [x] 2. 백엔드: POST /api/repos/{id}/clone
         gitpython으로 서버에 git clone
         clone_path = {settings.repos_path}/{repo_id}
         파일: backend/app/api/repos.py, backend/app/services/git.py
@@ -27,22 +27,22 @@ GitHub 레포 연동 + 포스트 생성 플로우
         포스트에 연결된 레포 조회/연결
         파일: backend/app/api/posts.py
 
-- [ ] 4. 스키마 추가
+- [x] 4. 스키마 추가
         GithubRepoItem, CloneStatus 등
         파일: backend/app/schemas/__init__.py
 
-- [ ] 5. 프론트: api.ts 확장
+- [x] 5. 프론트: api.ts 확장
         listGithubRepos, cloneRepo, getPostRepo, setPostRepo
         파일: frontend/src/services/api.ts
 
-- [ ] 6. 프론트: NewPostModal 컴포넌트
+- [x] 6. 프론트: NewPostModal 컴포넌트
         제목 입력 + GitHub 레포 선택 드롭다운
         파일: frontend/src/components/post/NewPostModal.tsx
 
-- [ ] 7. 프론트: HomePage에 NewPostModal 연결
+- [x] 7. 프론트: HomePage에 NewPostModal 연결
         파일: frontend/src/pages/HomePage.tsx
 
-- [ ] 8. 프론트: EditorPage 레포 정보 패널 + repo_contexts 연결
+- [x] 8. 프론트: EditorPage 레포 정보 패널 + repo_contexts 연결
         파일: frontend/src/pages/EditorPage.tsx
 
 ## 예상 변경 파일
