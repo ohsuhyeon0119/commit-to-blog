@@ -14,6 +14,16 @@
 - 주요 변경: docker-compose.yml, frontend/, backend/, db/init.sql 생성
 - 관련 docs 업데이트: 없음
 
+## 2026-05-23 SQLAlchemy 모델 + 핵심 API 구현
+- 완료 조건: 모두 충족 (5/5)
+- 주요 변경:
+  - backend/app/models/__init__.py — ORM 모델 7개 (User, Repository, Post, PostRepoReference, ChatSession, ChatMessage, ChatRepoContext)
+  - backend/app/schemas/__init__.py — Pydantic 스키마
+  - backend/app/api/posts.py — CRUD API
+  - backend/app/api/repos.py — 목록/등록 API
+  - backend/app/api/chat.py — clone_path DB lookup 적용
+- 관련 docs 업데이트: 없음 (기존 data-model.md와 일치)
+
 ## 2026-05-23 LangGraph 에이전트 아키텍처 설계
 - 완료 조건: 모두 충족 (5/5)
 - 주요 변경:
