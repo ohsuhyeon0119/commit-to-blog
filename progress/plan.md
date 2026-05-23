@@ -16,24 +16,24 @@ LangGraph 에이전트 아키텍처 설계
 
 ## 실행 단계
 
-- [ ] 1. AgentState 정의
+- [x] 1. AgentState 정의
         파일: backend/app/agent/state.py
         내용: messages, post_content, repo_contexts, pending_edit
 
-- [ ] 2. 파일 탐색 도구 구현
+- [x] 2. 파일 탐색 도구 구현
         파일: backend/app/agent/tools.py
         도구: list_directory / read_file / search_in_repo / suggest_edit
 
-- [ ] 3. LangGraph 그래프 구성
+- [x] 3. LangGraph 그래프 구성
         파일: backend/app/agent/graph.py
         구조: call_model → router → execute_tools → call_model (루프)
 
-- [ ] 4. 챗 API 엔드포인트 수정 (SSE 스트리밍)
+- [x] 4. 챗 API 엔드포인트 수정 (SSE 스트리밍)
         파일: backend/app/api/chat.py
         엔드포인트: POST /api/chat/{session_id}/message
         SSE 이벤트: token | edit_suggestion | done
 
-- [ ] 5. docs/backend/agent.md 문서화
+- [x] 5. docs/backend/agent.md 문서화
         내용: State/노드/SSE 포맷 + 설계 결정 기록
 
 ## 예상 변경 파일
